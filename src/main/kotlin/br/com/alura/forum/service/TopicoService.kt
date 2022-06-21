@@ -1,36 +1,55 @@
 package br.com.alura.forum.service
 
+import br.com.alura.forum.dto.AtualizaTopicoForm
 import br.com.alura.forum.dto.TopicoForm
 import br.com.alura.forum.dto.TopicoView
+import br.com.alura.forum.exception.NotFoundException
 import br.com.alura.forum.mapper.TopicoFormMapper
 import br.com.alura.forum.mapper.TopicoViewMapper
 import br.com.alura.forum.model.Topico
+import br.com.alura.forum.repository.TopicoRepository
 import org.springframework.stereotype.Service
 import java.util.stream.Collectors
 import kotlin.collections.ArrayList
 
 @Service
 class TopicoService(
-    private var topicos: List<Topico> = ArrayList(),
+    private val repository: TopicoRepository,
     private val topicoViewMapper: TopicoViewMapper,
-    private val topicoFormMapper: TopicoFormMapper
+    private val topicoFormMapper: TopicoFormMapper,
+    private val notFoundMessage: String = "tópico não encontrado"
 ) {
 
 
     fun Listar(): List<TopicoView> {
-        return topicos.stream().map { t -> topicoViewMapper.map(t) }.collect(Collectors.toList())
+        return repository.findAll()
+            .stream()
+            .map { t -> topicoViewMapper.map(t) }
+            .collect(Collectors.toList())
     }
 
     fun retornaTopicoEspecifico(id: Long): TopicoView {
-        val topico =  topicos.stream().filter { t ->
-            t.id == id
-        }.findFirst().get()
+        val topico = repository.findById(id)
+            .orElseThrow { NotFoundException(notFoundMessage) }
         return topicoViewMapper.map(topico)
     }
 
-    fun cadastrar(form: TopicoForm) {
+    fun cadastrar(form: TopicoForm): TopicoView {
         val topico = topicoFormMapper.map(form)
-        topico.id = topicos.size.toLong() + 1
-        topicos = topicos.plus(topico)
+        repository.save(topico)
+        return topicoViewMapper.map(topico)
+    }
+
+    fun atualizar(form: AtualizaTopicoForm): TopicoView {
+        val topico = repository.findById(form.id)
+            .orElseThrow { NotFoundException(notFoundMessage) }
+
+        topico.titulo = form.titulo
+        topico.mensagem = form.mensagem
+        return topicoViewMapper.map(topico)
+    }
+
+    fun deletar(id: Long) {
+        val topico = repository.deleteById(id)
     }
 }

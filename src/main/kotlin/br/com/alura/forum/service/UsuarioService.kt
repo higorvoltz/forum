@@ -1,26 +1,19 @@
 package br.com.alura.forum.service
 
 import br.com.alura.forum.model.Usuario
+import br.com.alura.forum.repository.UsuarioRepository
+import org.springframework.stereotype.Repository
 import org.springframework.stereotype.Service
 import java.util.*
 
 
+@Suppress("DEPRECATION")
 @Service
-class UsuarioService(var usuarios: List<Usuario>) {
+class UsuarioService(private val repository: UsuarioRepository) {
 
-    init {
-        val usuario = Usuario(
-            id = 1,
-            nome = "Zé",
-            email = "email@email.com"
-        )
-        usuarios = Arrays.asList(usuario)
-    }
 
     fun buscarPorId(id: Long): Usuario {
-        return usuarios.stream().filter { u ->
-            u.id == id
-        }.findFirst().get()
+        return repository.getOne(id)
     }
 }
 
